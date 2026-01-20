@@ -1,0 +1,2 @@
+# Python dependencies (if needed in the future)
+# Currently using Node.js/TypeScript stack
