@@ -9,7 +9,7 @@ const openai = new OpenAI({
  */
 export async function generateAudio(
   ipaText: string,
-  speed: number = 0.3
+  speed: number = 0.8
 ): Promise<Buffer> {
   if (speed < 0.1 || speed > 1.0) {
     throw new Error('Speed must be between 0.1 and 1.0');

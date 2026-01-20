@@ -4,7 +4,7 @@ import { LyricLine } from '@/lib/types';
 
 interface LyricsCardProps {
   lines: LyricLine[];
-  onPlayLine?: (lineIndex: number, ipaText: string) => void;
+  onPlayLine?: (lineIndex: number, line: LyricLine) => void;
   playingLineIndex?: number | null;
 }
 
@@ -36,7 +36,7 @@ export default function LyricsCard({ lines, onPlayLine, playingLineIndex }: Lyri
               </span>
               {onPlayLine && (
                 <button
-                  onClick={() => onPlayLine(index, line.ipa_sung)}
+                  onClick={() => onPlayLine(index, line)}
                   className="ml-auto px-3 py-2 text-xs sm:text-sm bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 text-green-700 dark:text-green-300 rounded transition-colors touch-manipulation min-h-[36px]"
                 >
                   🔊 播放

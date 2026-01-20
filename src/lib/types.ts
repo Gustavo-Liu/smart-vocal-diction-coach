@@ -21,6 +21,7 @@ export interface ProcessRequest {
 }
 
 export interface AudioRequest {
-  ipa_text: string;
+  ipa_text: string;      // 用于显示和缓存键
+  original_text: string; // 原始法语文本，用于 Google TTS
   speed?: number;
 }
