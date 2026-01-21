@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { RStyle } from '@/lib/types';
+import { useLanguage } from '@/lib/i18n';
 
 const LYDIA_FAURE_LYRICS = `Lydia sur tes roses joues
 Et sur ton col frais et si blanc
@@ -29,6 +30,7 @@ interface InputFormProps {
 }
 
 export default function InputForm({ onSubmit, isLoading = false }: InputFormProps) {
+  const { t } = useLanguage();
   const [lyrics, setLyrics] = useState('');
   const [rStyle, setRStyle] = useState<RStyle>('uvular');
 
@@ -47,29 +49,29 @@ export default function InputForm({ onSubmit, isLoading = false }: InputFormProp
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto space-y-4">
       <div className="flex items-center justify-between mb-2">
         <label htmlFor="lyrics" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          输入法语歌词
+          {t.inputLabel}
         </label>
         <button
           type="button"
           onClick={handleLoadTestLyrics}
           className="text-xs px-3 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-md transition-colors"
         >
-          加载测试歌词 (Lydia, Fauré)
+          {t.loadTestLyrics}
         </button>
       </div>
-      
+
       <textarea
         id="lyrics"
         value={lyrics}
         onChange={(e) => setLyrics(e.target.value)}
-        placeholder="粘贴或输入法语歌词..."
+        placeholder={t.inputPlaceholder}
         className="w-full h-48 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-y"
         disabled={isLoading}
       />
 
       <div className="flex items-center gap-4">
         <label htmlFor="r-style" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          R 音风格:
+          {t.rStyleLabel}
         </label>
         <select
           id="r-style"
@@ -78,8 +80,8 @@ export default function InputForm({ onSubmit, isLoading = false }: InputFormProp
           className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
           disabled={isLoading}
         >
-          <option value="uvular">Uvular [ʁ] (现代 Mélodie)</option>
-          <option value="rolled">Rolled [r] (歌剧/古典风格)</option>
+          <option value="uvular">{t.rStyleUvular}</option>
+          <option value="rolled">{t.rStyleRolled}</option>
         </select>
       </div>
 
@@ -88,7 +90,7 @@ export default function InputForm({ onSubmit, isLoading = false }: InputFormProp
         disabled={!lyrics.trim() || isLoading}
         className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors touch-manipulation min-h-[44px]"
       >
-        {isLoading ? '处理中...' : '生成 IPA'}
+        {isLoading ? t.processing : t.generateIPA}
       </button>
     </form>
   );

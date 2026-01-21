@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useLanguage } from '@/lib/i18n';
 
 interface AudioPlayerProps {
   audioUrl: string | null;
@@ -8,6 +9,7 @@ interface AudioPlayerProps {
 }
 
 export default function AudioPlayer({ audioUrl, onPlayComplete }: AudioPlayerProps) {
+  const { t } = useLanguage();
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -68,13 +70,13 @@ export default function AudioPlayer({ audioUrl, onPlayComplete }: AudioPlayerPro
         onClick={handlePlayPause}
         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors touch-manipulation min-h-[44px]"
       >
-        {isPlaying ? '⏸️ 暂停' : '▶️ 播放'}
+        {isPlaying ? t.pause : t.playBtn}
       </button>
       <button
         onClick={handleStop}
         className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors touch-manipulation min-h-[44px]"
       >
-        ⏹️ 停止
+        {t.stop}
       </button>
     </div>
   );

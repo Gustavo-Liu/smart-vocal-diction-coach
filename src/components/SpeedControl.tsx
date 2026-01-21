@@ -1,6 +1,7 @@
 'use client';
 
 import * as Slider from '@radix-ui/react-slider';
+import { useLanguage } from '@/lib/i18n';
 
 interface SpeedControlProps {
   speed: number;
@@ -8,11 +9,13 @@ interface SpeedControlProps {
 }
 
 export default function SpeedControl({ speed, onSpeedChange }: SpeedControlProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="w-full max-w-md mx-auto space-y-2">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          播放速度
+          {t.playbackSpeed}
         </label>
         <span className="text-sm font-mono text-blue-600 dark:text-blue-400">
           {speed.toFixed(1)}x
@@ -32,8 +35,8 @@ export default function SpeedControl({ speed, onSpeedChange }: SpeedControlProps
         <Slider.Thumb className="block w-5 h-5 bg-white dark:bg-gray-300 shadow-md rounded-full hover:bg-blue-50 dark:hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" />
       </Slider.Root>
       <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-        <span>0.1x (最慢)</span>
-        <span>1.0x (正常)</span>
+        <span>{t.slowest}</span>
+        <span>{t.normal}</span>
       </div>
     </div>
   );

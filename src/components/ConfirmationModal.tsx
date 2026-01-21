@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLanguage } from '@/lib/i18n';
 
 interface ConfirmationModalProps {
   lyrics: string;
@@ -15,6 +16,7 @@ export default function ConfirmationModal({
   onConfirm,
   onCancel,
 }: ConfirmationModalProps) {
+  const { t } = useLanguage();
   const [editedLyrics, setEditedLyrics] = useState(lyrics);
 
   if (!isOpen) return null;
@@ -28,19 +30,19 @@ export default function ConfirmationModal({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] sm:max-h-[80vh] flex flex-col">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            确认歌词
+            {t.confirmLyrics}
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            请检查并编辑歌词（如有需要），然后点击确认生成 IPA
+            {t.confirmDescription}
           </p>
         </div>
-        
+
         <div className="p-6 flex-1 overflow-y-auto">
           <textarea
             value={editedLyrics}
             onChange={(e) => setEditedLyrics(e.target.value)}
             className="w-full h-64 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-y font-mono text-sm"
-            placeholder="输入或编辑歌词..."
+            placeholder={t.editPlaceholder}
           />
         </div>
 
@@ -49,13 +51,13 @@ export default function ConfirmationModal({
             onClick={onCancel}
             className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors touch-manipulation min-h-[44px]"
           >
-            取消
+            {t.cancel}
           </button>
           <button
             onClick={handleConfirm}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors touch-manipulation min-h-[44px]"
           >
-            确认生成
+            {t.confirmGenerate}
           </button>
         </div>
       </div>

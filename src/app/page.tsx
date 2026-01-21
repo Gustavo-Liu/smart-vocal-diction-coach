@@ -6,9 +6,12 @@ import LyricsCard from '@/components/LyricsCard';
 import SpeedControl from '@/components/SpeedControl';
 import AudioPlayer from '@/components/AudioPlayer';
 import ProgressBar from '@/components/ProgressBar';
-import { ProcessResult, RStyle } from '@/lib/types';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { ProcessResult, RStyle, LyricLine } from '@/lib/types';
+import { useLanguage } from '@/lib/i18n';
 
 export default function Home() {
+  const { t } = useLanguage();
   const [lyrics, setLyrics] = useState('');
   const [rStyle, setRStyle] = useState<RStyle>('uvular');
   const [result, setResult] = useState<ProcessResult | null>(null);
@@ -47,20 +50,20 @@ export default function Home() {
     setResult(null);
     setCurrentAudioUrl(null);
     setProgress(0);
-    setProgressLabel('准备处理歌词...');
+    setProgressLabel(t.preparingLyrics);
 
     try {
       setDebugInfo(`[DEBUG] 开始处理歌词，R音风格: ${submittedRStyle}`);
       setProgress(10);
-      setProgressLabel('发送请求到服务器...');
+      setProgressLabel(t.sendingRequest);
 
       const requestBody = {
         lyrics: submittedLyrics,
         r_style: submittedRStyle,
       };
-      
+
       setDebugInfo(`[DEBUG] 请求体: ${JSON.stringify({ ...requestBody, lyrics: `${submittedLyrics.length} 字符` })}`);
-      
+
       const response = await fetch('/api/process', {
         method: 'POST',
         headers: {
@@ -70,35 +73,35 @@ export default function Home() {
       });
 
       setProgress(30);
-      setProgressLabel('等待服务器响应...');
+      setProgressLabel(t.waitingResponse);
       setDebugInfo(`[DEBUG] 响应状态: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: '未知错误' }));
+        const errorData = await response.json().catch(() => ({ message: t.unknownError }));
         setDebugInfo(`[DEBUG] 错误响应: ${JSON.stringify(errorData)}`);
-        throw new Error(errorData.message || errorData.error || '处理失败');
+        throw new Error(errorData.message || errorData.error || t.processingFailed);
       }
 
       setProgress(60);
-      setProgressLabel('解析响应数据...');
-      
+      setProgressLabel(t.parsingResponse);
+
       const data: ProcessResult = await response.json();
-      
+
       setDebugInfo(`[DEBUG] 成功获取结果，共 ${data.lines?.length || 0} 行`);
       setProgress(90);
-      setProgressLabel('完成处理...');
-      
+      setProgressLabel(t.processingComplete);
+
       setResult(data);
       setProgress(100);
-      setProgressLabel('完成！');
-      
+      setProgressLabel(t.complete);
+
       // 清除进度信息
       setTimeout(() => {
         setProgress(0);
         setProgressLabel('');
       }, 1000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '处理歌词时发生错误';
+      const errorMessage = err instanceof Error ? err.message : t.lyricsProcessingError;
       setDebugInfo(`[DEBUG] 错误: ${errorMessage}`);
       setError(errorMessage);
       setProgress(0);
@@ -120,7 +123,7 @@ export default function Home() {
     setError(null);
     setDebugInfo(null);
     setProgress(0);
-    setProgressLabel('生成音频...');
+    setProgressLabel(t.generatingAudio);
 
     try {
       setDebugInfo(`[DEBUG] 开始生成音频，行 ${lineIndex + 1}，原文: ${line.original.substring(0, 50)}...`);
@@ -133,7 +136,7 @@ export default function Home() {
       };
 
       setDebugInfo(`[DEBUG] 请求参数: 速度=${speed}, 原文="${line.original}", IPA长度=${line.ipa_sung.length}`);
-      
+
       const response = await fetch('/api/audio', {
         method: 'POST',
         headers: {
@@ -143,13 +146,13 @@ export default function Home() {
       });
 
       setProgress(50);
-      setProgressLabel('处理音频数据...');
+      setProgressLabel(t.processingAudio);
       setDebugInfo(`[DEBUG] 响应状态: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: '未知错误' }));
+        const errorData = await response.json().catch(() => ({ message: t.unknownError }));
         setDebugInfo(`[DEBUG] 错误响应: ${JSON.stringify(errorData)}`);
-        throw new Error(errorData.message || errorData.error || '生成音频失败');
+        throw new Error(errorData.message || errorData.error || t.audioGenerationFailed);
       }
 
       // 提取调试信息从响应头
@@ -158,7 +161,7 @@ export default function Home() {
       const ssml = decodeURIComponent(response.headers.get('X-Debug-SSML') || '');
       const voice = response.headers.get('X-Debug-Voice') || '';
       const cacheStatus = response.headers.get('X-Audio-Cache') || 'UNKNOWN';
-      
+
       setDebugInfo(`[DEBUG] 发送给 Google TTS 的信息:
 原始 IPA: ${originalIpa}
 规范化 IPA: ${normalizedIpa}
@@ -168,7 +171,7 @@ export default function Home() {
 缓存: ${cacheStatus}`);
 
       setProgress(70);
-      setProgressLabel('下载音频...');
+      setProgressLabel(t.downloadingAudio);
 
       const tBlobStart = performance.now();
       const audioBlob = await response.blob();
@@ -176,14 +179,14 @@ export default function Home() {
       setDebugInfo((prev) => `${prev}\n[DEBUG] 收到音频二进制：${audioBlob.type || 'unknown'}, ${audioBlob.size} bytes（下载+转blob ${blobMs}ms）`);
 
       setProgress(85);
-      setProgressLabel('准备播放...');
+      setProgressLabel(t.preparingPlayback);
 
       const audioUrl = URL.createObjectURL(audioBlob);
       setCurrentAudioUrl(audioUrl);
 
       setProgress(95);
-      setProgressLabel('播放中...');
-      
+      setProgressLabel(t.playing);
+
       // Play audio
       const audio = sharedAudioRef.current ?? new Audio();
       sharedAudioRef.current = audio;
@@ -205,7 +208,7 @@ export default function Home() {
         setProgress(0);
         setProgressLabel('');
         setDebugInfo(`[DEBUG] 音频播放错误: ${e}`);
-        setError('播放音频时发生错误');
+        setError(t.audioPlaybackError);
       };
 
       // OPTIMIZATION: 使用浏览器端 playbackRate 调整速度，而不是每次速度变化都重新生成音频
@@ -216,7 +219,7 @@ export default function Home() {
       await audio.play();
       setDebugInfo((prev) => `${prev ?? ''} | [DEBUG] audio.play() 启动耗时 ${Math.round(performance.now() - tPlayStart)}ms (playbackRate=${speed})`);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '生成音频时发生错误';
+      const errorMessage = err instanceof Error ? err.message : t.audioGenerationFailed;
       setDebugInfo(`[DEBUG] 错误: ${errorMessage}`);
       setError(errorMessage);
       setPlayingLineIndex(null);
@@ -240,7 +243,7 @@ export default function Home() {
     setDebugInfo(null);
     setPlayingLineIndex(null);
     setProgress(0);
-    setProgressLabel('准备播放全篇...');
+    setProgressLabel(t.preparingPlayAll);
 
     try {
       const totalLines = result.lines.length;
@@ -248,7 +251,7 @@ export default function Home() {
 
       // OPTIMIZATION: 并行预生成前 3 行音频，后续边播放边生成
       setProgress(5);
-      setProgressLabel('并行预生成音频...');
+      setProgressLabel(t.prefetchingAudio);
       const PREFETCH_COUNT = Math.min(3, totalLines);
 
       const prefetchPromises = result.lines.slice(0, PREFETCH_COUNT).map((line, idx) =>
@@ -257,7 +260,7 @@ export default function Home() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ipa_text: line.ipa_sung, original_text: line.original, speed }),
         }).then(async res => {
-          if (!res.ok) throw new Error(`第 ${idx + 1} 行预生成失败`);
+          if (!res.ok) throw new Error(t.linePrefetchFailed(idx + 1));
           return { index: idx, blob: await res.blob(), url: '' };
         })
       );
@@ -277,7 +280,7 @@ export default function Home() {
         setPlayingLineIndex(i);
         const progressPercent = 20 + (i / totalLines) * 80;
         setProgress(progressPercent);
-        setProgressLabel(`播放第 ${i + 1}/${totalLines} 行...`);
+        setProgressLabel(t.playingLine(i + 1, totalLines));
 
         let audioUrl: string;
 
@@ -297,8 +300,8 @@ export default function Home() {
           });
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: '未知错误' }));
-            throw new Error(`第 ${i + 1} 行生成音频失败: ${errorData.message || errorData.error || '未知错误'}`);
+            const errorData = await response.json().catch(() => ({ message: t.unknownError }));
+            throw new Error(t.lineAudioFailed(i + 1, errorData.message || errorData.error || t.unknownError));
           }
 
           const audioBlob = await response.blob();
@@ -307,7 +310,7 @@ export default function Home() {
         }
 
         setProgress(progressPercent + (40 / totalLines));
-        setProgressLabel(`播放第 ${i + 1}/${totalLines} 行...`);
+        setProgressLabel(t.playingLine(i + 1, totalLines));
 
         await new Promise<void>((resolve, reject) => {
           const audio = sharedAudioRef.current ?? new Audio();
@@ -323,7 +326,7 @@ export default function Home() {
           audio.onerror = (e) => {
             URL.revokeObjectURL(audioUrl);
             setDebugInfo(`[DEBUG] 第 ${i + 1} 行播放错误: ${e}`);
-            reject(new Error(`第 ${i + 1} 行播放音频时发生错误`));
+            reject(new Error(t.linePlaybackError(i + 1)));
           };
           audio.play().catch((err) => {
             URL.revokeObjectURL(audioUrl);
@@ -335,15 +338,15 @@ export default function Home() {
 
       setPlayingLineIndex(null);
       setProgress(100);
-      setProgressLabel('播放完成！');
+      setProgressLabel(t.playbackComplete);
       setDebugInfo(`[DEBUG] 全篇播放完成，共 ${totalLines} 行`);
-      
+
       setTimeout(() => {
         setProgress(0);
         setProgressLabel('');
       }, 2000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '播放失败';
+      const errorMessage = err instanceof Error ? err.message : t.playbackFailed;
       setDebugInfo(`[DEBUG] 播放错误: ${errorMessage}`);
       setError(errorMessage);
       setPlayingLineIndex(null);
@@ -358,12 +361,15 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 py-4 sm:py-8 px-4">
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-8">
         {/* Header */}
-        <div className="text-center">
+        <div className="text-center relative">
+          <div className="absolute right-0 top-0">
+            <LanguageSwitcher />
+          </div>
           <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            智能声乐正音助手
+            {t.title}
           </h1>
           <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            法语艺术歌曲发音指导工具
+            {t.subtitle}
           </p>
         </div>
 
@@ -394,9 +400,9 @@ export default function Home() {
         {/* Progress Bar */}
         {(isLoading || progress > 0) && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-            <ProgressBar 
-              progress={progress} 
-              label={progressLabel || (isLoading ? '处理中...' : '')}
+            <ProgressBar
+              progress={progress}
+              label={progressLabel || (isLoading ? t.processing : '')}
             />
           </div>
         )}
@@ -405,7 +411,7 @@ export default function Home() {
         {isLoading && !result && progress === 0 && (
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">处理中...</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">{t.processing}</p>
           </div>
         )}
 
@@ -424,7 +430,7 @@ export default function Home() {
                 disabled={isLoading}
                 className="w-full sm:w-auto px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors touch-manipulation"
               >
-                {isLoading ? '播放中...' : '🎵 播放全篇'}
+                {isLoading ? t.playingAll : t.playAll}
               </button>
             </div>
 

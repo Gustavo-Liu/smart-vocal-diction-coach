@@ -1,6 +1,7 @@
 'use client';
 
 import { LyricLine } from '@/lib/types';
+import { useLanguage } from '@/lib/i18n';
 
 interface LyricsCardProps {
   lines: LyricLine[];
@@ -9,6 +10,8 @@ interface LyricsCardProps {
 }
 
 export default function LyricsCard({ lines, onPlayLine, playingLineIndex }: LyricsCardProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
       {lines.map((line, index) => (
@@ -29,7 +32,7 @@ export default function LyricsCard({ lines, onPlayLine, playingLineIndex }: Lyri
             {/* IPA Sung */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                IPA (歌唱):
+                {t.ipaSung}
               </span>
               <span className="text-base font-mono text-blue-700 dark:text-blue-300">
                 {line.ipa_sung}
@@ -39,7 +42,7 @@ export default function LyricsCard({ lines, onPlayLine, playingLineIndex }: Lyri
                   onClick={() => onPlayLine(index, line)}
                   className="ml-auto px-3 py-2 text-xs sm:text-sm bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 text-green-700 dark:text-green-300 rounded transition-colors touch-manipulation min-h-[36px]"
                 >
-                  🔊 播放
+                  {t.play}
                 </button>
               )}
             </div>
@@ -47,7 +50,7 @@ export default function LyricsCard({ lines, onPlayLine, playingLineIndex }: Lyri
             {/* IPA Spoken (对比用) */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                IPA (口语):
+                {t.ipaSpoken}
               </span>
               <span className="text-sm font-mono text-gray-600 dark:text-gray-400">
                 {line.ipa_spoken}
@@ -58,7 +61,7 @@ export default function LyricsCard({ lines, onPlayLine, playingLineIndex }: Lyri
             {line.notes && line.notes.length > 0 && (
               <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                 <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                  说明:
+                  {t.notes}
                 </div>
                 <ul className="list-disc list-inside space-y-1">
                   {line.notes.map((note, noteIndex) => (
