@@ -140,7 +140,8 @@ export const translations = {
     linePlaybackError: (line: number) => `Error playing line ${line}`,
     playbackFailed: 'Playback failed',
   },
-} as const;
+};
 
 export type Locale = keyof typeof translations;
 export type TranslationKey = keyof typeof translations.zh;
+export type Translations = typeof translations.zh;
