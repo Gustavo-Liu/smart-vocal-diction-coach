@@ -104,7 +104,9 @@ export async function processFrenchLyrics(
     // Cache result (limit cache size to prevent memory issues)
     if (lyricsCache.size > 50) {
       const firstKey = lyricsCache.keys().next().value;
-      lyricsCache.delete(firstKey);
+      if (firstKey !== undefined) {
+        lyricsCache.delete(firstKey);
+      }
     }
     lyricsCache.set(cacheKey, parsed);
 
