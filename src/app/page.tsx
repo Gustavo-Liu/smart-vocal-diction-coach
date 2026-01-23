@@ -8,6 +8,7 @@ import AudioPlayer from '@/components/AudioPlayer';
 import ProgressBar from '@/components/ProgressBar';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ApiLogsTab from '@/components/ApiLogsTab';
+import LyricsSearchDialog from '@/components/LyricsSearchDialog';
 import { ProcessResult, RStyle, LyricLine, ApiCallRecord } from '@/lib/types';
 import { useLanguage } from '@/lib/i18n';
 
@@ -27,6 +28,7 @@ export default function Home() {
   const sharedAudioRef = useRef<HTMLAudioElement | null>(null);
   const [showApiLogs, setShowApiLogs] = useState(false);
   const [apiLogs, setApiLogs] = useState<ApiCallRecord[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
 
   // 清理 audio URL 以防止内存泄漏
   useEffect(() => {
@@ -421,7 +423,13 @@ export default function Home() {
 
         {/* Input Form */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-          <InputForm onSubmit={handleSubmit} isLoading={isLoading} />
+          <InputForm
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            onOpenSearch={() => setShowSearch(true)}
+            lyrics={lyrics}
+            onLyricsChange={setLyrics}
+          />
         </div>
 
         {/* Error Message */}
@@ -530,6 +538,16 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Lyrics Search Dialog */}
+      <LyricsSearchDialog
+        isOpen={showSearch}
+        onClose={() => setShowSearch(false)}
+        onImportLyrics={(importedLyrics) => {
+          setLyrics(importedLyrics);
+          setShowSearch(false);
+        }}
+      />
     </main>
   );
 }
