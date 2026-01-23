@@ -21,12 +21,29 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[API /process] 开始处理歌词...');
-    const result = await processFrenchLyrics(lyrics, r_style as RStyle);
-    
-    const duration = Date.now() - startTime;
-    console.log(`[API /process] 处理成功: 共 ${result.lines?.length || 0} 行，耗时 ${duration}ms`);
+    const response = await processFrenchLyrics(lyrics, r_style as RStyle);
 
-    return NextResponse.json(result);
+    const duration = Date.now() - startTime;
+    console.log(`[API /process] 处理成功: 共 ${response.result.lines?.length || 0} 行，耗时 ${duration}ms`);
+
+    // 构建响应，在响应头中包含统计信息
+    const headers: Record<string, string> = {
+      'X-Processing-Duration': duration.toString(),
+      'X-API-Name': 'GPT-4o',
+    };
+
+    if (response.usage) {
+      headers['X-Input-Tokens'] = response.usage.inputTokens.toString();
+      headers['X-Output-Tokens'] = response.usage.outputTokens.toString();
+      headers['X-Total-Tokens'] = response.usage.totalTokens.toString();
+      headers['X-Cost'] = response.usage.cost.toFixed(6);
+    }
+
+    if (response.prompt) {
+      headers['X-Prompt'] = encodeURIComponent(response.prompt.substring(0, 500)); // 限制长度
+    }
+
+    return NextResponse.json(response.result, { headers });
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error(`[API /process] 错误 (耗时 ${duration}ms):`, error);

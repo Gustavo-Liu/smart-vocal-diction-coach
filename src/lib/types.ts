@@ -25,3 +25,16 @@ export interface AudioRequest {
   original_text: string; // 原始法语文本，用于 Google TTS
   speed?: number;
 }
+
+export interface ApiCallRecord {
+  id: string;
+  timestamp: number;
+  apiName: string;           // API 名称 (如 "GPT-4o", "Google TTS")
+  duration: number;          // 处理时间（毫秒）
+  prompt?: string;           // 发送的 prompt
+  inputTokens?: number;      // 输入 token 数
+  outputTokens?: number;     // 输出 token 数
+  cost?: number;             // 花费（美元）
+  status: 'success' | 'error';
+  error?: string;
+}

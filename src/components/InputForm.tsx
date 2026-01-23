@@ -27,12 +27,24 @@ Que je puisse mourir, mourir toujours!`;
 interface InputFormProps {
   onSubmit: (lyrics: string, rStyle: RStyle) => void;
   isLoading?: boolean;
+  onOpenSearch?: () => void;
+  lyrics?: string;
+  onLyricsChange?: (lyrics: string) => void;
 }
 
-export default function InputForm({ onSubmit, isLoading = false }: InputFormProps) {
+export default function InputForm({ onSubmit, isLoading = false, onOpenSearch, lyrics: externalLyrics, onLyricsChange }: InputFormProps) {
   const { t } = useLanguage();
-  const [lyrics, setLyrics] = useState('');
+  const [internalLyrics, setInternalLyrics] = useState('');
   const [rStyle, setRStyle] = useState<RStyle>('uvular');
+
+  const lyrics = externalLyrics !== undefined ? externalLyrics : internalLyrics;
+  const setLyrics = (value: string) => {
+    if (onLyricsChange) {
+      onLyricsChange(value);
+    } else {
+      setInternalLyrics(value);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,13 +63,24 @@ export default function InputForm({ onSubmit, isLoading = false }: InputFormProp
         <label htmlFor="lyrics" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {t.inputLabel}
         </label>
-        <button
-          type="button"
-          onClick={handleLoadTestLyrics}
-          className="text-xs px-3 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-md transition-colors"
-        >
-          {t.loadTestLyrics}
-        </button>
+        <div className="flex gap-2">
+          {onOpenSearch && (
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              className="text-xs px-3 py-1 bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 text-green-700 dark:text-green-300 rounded-md transition-colors"
+            >
+              🔍 智能搜索
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleLoadTestLyrics}
+            className="text-xs px-3 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-md transition-colors"
+          >
+            {t.loadTestLyrics}
+          </button>
+        </div>
       </div>
 
       <textarea

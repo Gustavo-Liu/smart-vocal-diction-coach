@@ -7,7 +7,8 @@ import SpeedControl from '@/components/SpeedControl';
 import AudioPlayer from '@/components/AudioPlayer';
 import ProgressBar from '@/components/ProgressBar';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { ProcessResult, RStyle, LyricLine } from '@/lib/types';
+import ApiLogsTab from '@/components/ApiLogsTab';
+import { ProcessResult, RStyle, LyricLine, ApiCallRecord } from '@/lib/types';
 import { useLanguage } from '@/lib/i18n';
 
 export default function Home() {
@@ -24,6 +25,8 @@ export default function Home() {
   const [playingLineIndex, setPlayingLineIndex] = useState<number | null>(null);
   const [speed, setSpeed] = useState(0.8);
   const sharedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [showApiLogs, setShowApiLogs] = useState(false);
+  const [apiLogs, setApiLogs] = useState<ApiCallRecord[]>([]);
 
   // 清理 audio URL 以防止内存泄漏
   useEffect(() => {
@@ -52,6 +55,8 @@ export default function Home() {
     setProgress(0);
     setProgressLabel(t.preparingLyrics);
 
+    const startTime = Date.now();
+
     try {
       setDebugInfo(`[DEBUG] 开始处理歌词，R音风格: ${submittedRStyle}`);
       setProgress(10);
@@ -72,6 +77,8 @@ export default function Home() {
         body: JSON.stringify(requestBody),
       });
 
+      const duration = Date.now() - startTime;
+
       setProgress(30);
       setProgressLabel(t.waitingResponse);
       setDebugInfo(`[DEBUG] 响应状态: ${response.status} ${response.statusText}`);
@@ -79,6 +86,18 @@ export default function Home() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: t.unknownError }));
         setDebugInfo(`[DEBUG] 错误响应: ${JSON.stringify(errorData)}`);
+
+        // 记录失败的 API 调用
+        const errorLog: ApiCallRecord = {
+          id: `api-${Date.now()}-${Math.random()}`,
+          timestamp: Date.now(),
+          apiName: 'GPT-4o',
+          duration,
+          status: 'error',
+          error: errorData.message || errorData.error || t.processingFailed,
+        };
+        setApiLogs(prev => [errorLog, ...prev]);
+
         throw new Error(errorData.message || errorData.error || t.processingFailed);
       }
 
@@ -90,6 +109,20 @@ export default function Home() {
       setDebugInfo(`[DEBUG] 成功获取结果，共 ${data.lines?.length || 0} 行`);
       setProgress(90);
       setProgressLabel(t.processingComplete);
+
+      // 从响应头中提取 API 统计信息
+      const apiLog: ApiCallRecord = {
+        id: `api-${Date.now()}-${Math.random()}`,
+        timestamp: Date.now(),
+        apiName: response.headers.get('X-API-Name') || 'GPT-4o',
+        duration: parseInt(response.headers.get('X-Processing-Duration') || duration.toString()),
+        inputTokens: parseInt(response.headers.get('X-Input-Tokens') || '0'),
+        outputTokens: parseInt(response.headers.get('X-Output-Tokens') || '0'),
+        cost: parseFloat(response.headers.get('X-Cost') || '0'),
+        prompt: response.headers.get('X-Prompt') ? decodeURIComponent(response.headers.get('X-Prompt')!) : undefined,
+        status: 'success',
+      };
+      setApiLogs(prev => [apiLog, ...prev]);
 
       setResult(data);
       setProgress(100);
@@ -362,7 +395,20 @@ export default function Home() {
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-8">
         {/* Header */}
         <div className="text-center relative">
-          <div className="absolute right-0 top-0">
+          <div className="absolute right-0 top-0 flex gap-2">
+            <button
+              onClick={() => setShowApiLogs(true)}
+              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
+              title="查看 API 调用日志"
+            >
+              <span>📊</span>
+              <span>API 日志</span>
+              {apiLogs.length > 0 && (
+                <span className="bg-white text-purple-600 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                  {apiLogs.length}
+                </span>
+              )}
+            </button>
             <LanguageSwitcher />
           </div>
           <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-2">
@@ -456,6 +502,34 @@ export default function Home() {
         )}
 
       </div>
+
+      {/* API Logs Dialog */}
+      {showApiLogs && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                API 调用日志
+              </h2>
+              <button
+                onClick={() => setShowApiLogs(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <ApiLogsTab
+                logs={apiLogs}
+                onClearLogs={() => setApiLogs([])}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

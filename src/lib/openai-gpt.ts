@@ -9,17 +9,31 @@ const openai = new OpenAI({
 // Simple in-memory cache (for MVP)
 const lyricsCache = new Map<string, ProcessResult>();
 
+export interface ProcessResponse {
+  result: ProcessResult;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    cost: number;
+  };
+  prompt?: string;
+}
+
 /**
  * Process French lyrics and generate IPA JSON
  */
 export async function processFrenchLyrics(
   lyrics: string,
   rStyle: 'uvular' | 'rolled' = 'uvular'
-): Promise<ProcessResult> {
+): Promise<ProcessResponse> {
   // Check cache
   const cacheKey = `${lyrics.trim()}_${rStyle}`;
   if (lyricsCache.has(cacheKey)) {
-    return lyricsCache.get(cacheKey)!;
+    return {
+      result: lyricsCache.get(cacheKey)!,
+      usage: undefined, // 缓存命中，无 API 调用
+    };
   }
 
   const prompt = buildFrenchPrompt(lyrics, rStyle);
@@ -75,6 +89,18 @@ export async function processFrenchLyrics(
       }
     });
 
+    // 计算使用统计和成本
+    const usage = response.usage;
+    const inputTokens = usage?.prompt_tokens || 0;
+    const outputTokens = usage?.completion_tokens || 0;
+
+    // GPT-4o 定价 (2026年1月)
+    // 输入: $2.50 / 1M tokens
+    // 输出: $10.00 / 1M tokens
+    const inputCost = (inputTokens / 1_000_000) * 2.50;
+    const outputCost = (outputTokens / 1_000_000) * 10.00;
+    const totalCost = inputCost + outputCost;
+
     // Cache result (limit cache size to prevent memory issues)
     if (lyricsCache.size > 50) {
       const firstKey = lyricsCache.keys().next().value;
@@ -82,7 +108,16 @@ export async function processFrenchLyrics(
     }
     lyricsCache.set(cacheKey, parsed);
 
-    return parsed;
+    return {
+      result: parsed,
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+        cost: totalCost,
+      },
+      prompt,
+    };
   } catch (error) {
     console.error('Error processing French lyrics:', error);
     throw new Error(`Failed to process lyrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
