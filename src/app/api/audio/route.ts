@@ -7,20 +7,12 @@ export const runtime = 'nodejs';
 const audioCache = new Map<string, Buffer>();
 const MAX_CACHE_ENTRIES = 200;
 
-// 将 IPA 规范化：移除标记符号，保留音素
-function normalizeIpaForTts(ipa: string): string {
-  let result = ipa
-    .replaceAll('‿', ' ')           // 移除连读标记
-    .replace(/\(([^)]+)\)/g, '$1')  // 去括号 (ə) → ə
-    .replaceAll('-', ' ');          // 音节分隔符变空格
-
-  // 清理多余空格
-  result = result.replace(/\s+/g, ' ').trim();
-
-  return result;
-}
-
-// 使用 SSML phoneme 标签，直接用 IPA 控制发音
+// 生成 TTS 音频
+// 注意：Google TTS 的 <phoneme> 标签对法语 IPA 支持非常有限，
+// 尝试过的方案（IPA phoneme、近似音素 hack）均无效，
+// 所以我们直接用法语原文让 TTS 自然发音。
+// IPA 仅用于学生阅读学习，不用于控制 TTS。
+// 策略：直接用法语原文，因为 Google TTS 的 IPA phoneme 支持有限
 async function synthesizeMp3FromIpa(
   originalText: string,
   ipaSung: string,
@@ -29,16 +21,12 @@ async function synthesizeMp3FromIpa(
 ): Promise<Buffer> {
   const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
-  // 规范化 IPA
-  const normalizedIpa = normalizeIpaForTts(ipaSung);
-
-  // 使用 SSML phoneme 标签，ph 属性指定 IPA 发音
-  // alphabet="ipa" 告诉 Google 使用 IPA 音标
-  const ssml = `<speak><phoneme alphabet="ipa" ph="${normalizedIpa}">${originalText}</phoneme></speak>`;
+  // 直接使用法语原文作为输入
+  // Google TTS 的 phoneme 标签对法语支持不好，所以我们放弃 IPA 控制
+  const ssml = `<speak>${originalText}</speak>`;
 
   console.log('[Google TTS] 原文:', originalText);
-  console.log('[Google TTS] IPA:', ipaSung);
-  console.log('[Google TTS] 规范化 IPA:', normalizedIpa);
+  console.log('[Google TTS] IPA (仅供显示):', ipaSung);
   console.log('[Google TTS] SSML:', ssml);
 
   const requestBody = {
@@ -94,14 +82,13 @@ export async function POST(request: NextRequest) {
     }
 
     const voiceName = process.env.GOOGLE_TTS_VOICE_NAME || 'fr-FR-Neural2-A';
-    // OPTIMIZATION: 不再将 speed 包含在缓存键中，因为客户端使用 playbackRate 调整速度
-    // 使用原文作为缓存键，因为我们用原文生成语音
+    // 使用原文作为缓存键（TTS 基于原文生成，IPA 仅供显示）
     const cacheKey = `${voiceName}|${original_text.trim()}`;
 
     // 调试信息
     console.log('[API /audio] ========== 发送给 Google TTS 的信息 ==========');
     console.log('[API /audio] 原始法语文本:', original_text);
-    console.log('[API /audio] IPA (仅供参考):', ipa_text);
+    console.log('[API /audio] 原始 IPA:', ipa_text);
     console.log('[API /audio] 语音:', voiceName);
     console.log('[API /audio] ====================================================');
 
@@ -115,6 +102,9 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'audio/mpeg',
           'Cache-Control': 'no-store',
           'X-Audio-Cache': 'HIT',
+          'X-Processing-Duration': duration.toString(),
+          'X-API-Name': 'Google TTS (Cached)',
+          'X-Cost': '0',
           'X-Debug-Original-Text': encodeURIComponent(original_text),
           'X-Debug-IPA': encodeURIComponent(ipa_text),
           'X-Debug-Voice': voiceName,
@@ -144,11 +134,21 @@ export async function POST(request: NextRequest) {
     const duration = Date.now() - startTime;
     console.log(`[API /audio] 处理完成，耗时 ${duration}ms（含TTS）`);
 
+    // Google TTS 定价: 标准语音 $4/100万字符, Neural2 语音 $16/100万字符
+    // 我们使用 Neural2 语音
+    const charCount = original_text.length;
+    const ttsCost = (charCount / 1_000_000) * 16;
+
     return new NextResponse(new Uint8Array(audioBuffer), {
       headers: {
         'Content-Type': 'audio/mpeg',
         'Cache-Control': 'no-store',
         'X-Audio-Cache': 'MISS',
+        'X-Processing-Duration': duration.toString(),
+        'X-TTS-Duration': ttsDuration.toString(),
+        'X-API-Name': 'Google TTS',
+        'X-Char-Count': charCount.toString(),
+        'X-Cost': ttsCost.toFixed(8),
         'X-Debug-Original-Text': encodeURIComponent(original_text),
         'X-Debug-IPA': encodeURIComponent(ipa_text),
         'X-Debug-Voice': voiceName,

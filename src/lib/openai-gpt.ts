@@ -22,13 +22,13 @@ export interface ProcessResponse {
 
 /**
  * Process French lyrics and generate IPA JSON
+ * Uses classical singing style with rolled R [r]
  */
 export async function processFrenchLyrics(
-  lyrics: string,
-  rStyle: 'uvular' | 'rolled' = 'uvular'
+  lyrics: string
 ): Promise<ProcessResponse> {
   // Check cache
-  const cacheKey = `${lyrics.trim()}_${rStyle}`;
+  const cacheKey = lyrics.trim();
   if (lyricsCache.has(cacheKey)) {
     return {
       result: lyricsCache.get(cacheKey)!,
@@ -36,7 +36,7 @@ export async function processFrenchLyrics(
     };
   }
 
-  const prompt = buildFrenchPrompt(lyrics, rStyle);
+  const prompt = buildFrenchPrompt(lyrics);
 
   try {
     const response = await openai.chat.completions.create({
@@ -81,11 +81,8 @@ export async function processFrenchLyrics(
 
     // Validate each line
     parsed.lines.forEach((line: LyricLine, index: number) => {
-      if (!line.original || !line.ipa_sung || !line.ipa_spoken) {
+      if (!line.original || !line.ipa_sung) {
         throw new Error(`Invalid line structure at index ${index}`);
-      }
-      if (!Array.isArray(line.notes)) {
-        line.notes = [];
       }
     });
 

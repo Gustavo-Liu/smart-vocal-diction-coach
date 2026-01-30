@@ -10,6 +10,8 @@ interface SearchResult {
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     const { query } = await request.json();
 
@@ -95,15 +97,42 @@ Example format for lyrics field:
 
     console.log('[API /search-lyrics] 找到', results.length, '首歌曲');
 
-    return NextResponse.json({ results });
+    const duration = Date.now() - startTime;
+    const usage = completion.usage;
+    const inputTokens = usage?.prompt_tokens || 0;
+    const outputTokens = usage?.completion_tokens || 0;
+
+    // GPT-4o 定价
+    const inputCost = (inputTokens / 1_000_000) * 2.50;
+    const outputCost = (outputTokens / 1_000_000) * 10.00;
+    const totalCost = inputCost + outputCost;
+
+    // 构建响应头
+    const headers: Record<string, string> = {
+      'X-Processing-Duration': duration.toString(),
+      'X-API-Name': 'GPT-4o (Search)',
+      'X-Input-Tokens': inputTokens.toString(),
+      'X-Output-Tokens': outputTokens.toString(),
+      'X-Cost': totalCost.toFixed(6),
+      'X-Prompt': encodeURIComponent(searchPrompt.substring(0, 500)),
+    };
+
+    return NextResponse.json({ results }, { headers });
 
   } catch (error) {
+    const duration = Date.now() - startTime;
     console.error('[API /search-lyrics] 错误:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     return NextResponse.json(
       { error: '搜索失败', message: errorMessage },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'X-Processing-Duration': duration.toString(),
+          'X-API-Name': 'GPT-4o (Search)',
+        }
+      }
     );
   }
 }

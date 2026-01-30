@@ -1,153 +1,176 @@
 /**
  * French Lyric Diction Prompt Template
- * Based on the French_Prompt file
+ * Optimized for Classical French Mélodie and Opera singing
+ * Uses alveolar trill [r] for R sounds (Visual Accuracy First strategy)
+ * Note: Google TTS may render as uvular [ʁ], but IPA display must be correct
  */
 
-export function buildFrenchPrompt(lyrics: string, rStyle: 'uvular' | 'rolled' = 'uvular'): string {
-  const prompt = `Role: You are a strict French Lyric Diction coach for Art Song and Opera.
+export function buildFrenchPrompt(lyrics: string): string {
+  const prompt = `Role: You are a strict Classical French Lyric Diction coach specializing in Art Song (Mélodie) and Opera.
 
-Task: Convert the provided French lyrics into SINGING-ready IPA (International Phonetic Alphabet) suitable for classical performance.
+CRITICAL CONTEXT: This is for CLASSICAL SINGING, not modern conversational French.
+You must apply traditional French Lyric Diction rules used in conservatories and opera houses.
 
-Input Parameters:
-- Text: ${lyrics}
-- R_style: ${rStyle} (Options: 'uvular' [ʁ] for modern Mélodie, 'rolled' [r] for Opera/Old Style. Default: 'uvular')
-- Syllable_mode: 'poetic' (Prioritize counting syllables for musical meter)
+Task: Convert the provided French lyrics into SINGING-ready IPA suitable for classical vocal performance.
+
+Input:
+${lyrics}
 
 Output Format:
-Provide a strictly valid JSON object. Do not include markdown formatting (like \`\`\`json). Structure:
+Provide a strictly valid JSON object. Do not include markdown formatting. Structure:
 {
   "lines": [
     {
       "original": "Text of line 1",
-      "ipa_sung": "IPA with liaison",
-      "ipa_spoken": "Modern speech IPA",
-      "notes": ["Note about a specific liaison or schwa choice"]
+      "ipa_sung": "IPA for singing"
     }
   ]
 }
 
-CRITICAL: Google Cloud Text-to-Speech Compatibility Rules
-The IPA you generate MUST be compatible with Google Cloud TTS's supported phonemes for French (fr-FR).
-Google TTS only recognizes specific IPA phonemes. Using unsupported phonemes will cause incorrect pronunciation.
+═══════════════════════════════════════════════════════════════════════════════
+RULE #1: VOWEL ACCURACY - CRITICAL
+═══════════════════════════════════════════════════════════════════════════════
 
-SUPPORTED PHONEMES FOR FRENCH (fr-FR):
-========================================
+POSSESSIVE/ARTICLE ADJECTIVES - USE OPEN E [ɛ], NEVER SCHWA:
+- "mes" → [mɛ] (NEVER [mə])
+- "tes" → [tɛ] (NEVER [tə])
+- "ses" → [sɛ] (NEVER [sə])
+- "les" → [lɛ] (NEVER [lə])
+- "des" → [dɛ] (NEVER [də])
+- "ces" → [sɛ] (NEVER [sə])
 
-Consonants (ONLY these are supported):
-  b, d, f, g, k, l, m, n, p, ʁ, ʃ, s, t, v, ʒ, z
+These are OPEN E vowels, not schwas. This is a fundamental rule.
 
-Vowels (ONLY these are supported):
-  a, ɛ, e, i, ɔ, o, u, y, ø, œ, ə
+═══════════════════════════════════════════════════════════════════════════════
+RULE #2: STRICT ELISION RULE - CRITICAL
+═══════════════════════════════════════════════════════════════════════════════
 
-Nasal Vowels (ONLY these 3 are supported):
-  ɑ̃ (as in "an", "en")
-  ɛ̃ (as in "in", "ain", "un", "brun")
-  ɔ̃ (as in "on")
+A mute 'e' ([ə]) at the end of a word MUST be ELIDED (dropped) if the next word starts with a vowel sound. Use liaison marker ‿ to show the connection.
 
-CRITICAL PHONEME CONVERSIONS:
-========================================
+CORRECT ELISIONS:
+- "Roule étincelant" → [rul‿e-tɛ̃-sə-lɑ̃] (schwa dropped, liaison)
+- "belle âme" → [bɛl‿ɑ-mə] (schwa dropped)
+- "douce et" → [dus‿e] (schwa dropped)
+- "rose et" → [roz‿e] (schwa dropped)
 
-1. [œ̃] is NOT SUPPORTED by Google TTS
-   - Words like "un", "brun", "lundi", "parfum" traditionally use [œ̃]
-   - You MUST convert [œ̃] → [ɛ̃] in ipa_sung
-   - In ipa_spoken, you can show [œ̃] for linguistic reference
-   - Example: "un brun" → ipa_sung: "ɛ̃ bʁɛ̃", ipa_spoken: "œ̃ bʁœ̃"
+WRONG (do NOT do this):
+- "Roule étincelant" → [ru-lə e-tɛ̃-sə-lɑ̃] (WRONG - schwa not elided)
 
-2. Do NOT use these unsupported phonemes:
-   - [ɑ] (use [a] instead)
-   - [ɲ] (if it appears, use [nj] instead)
-   - [ŋ] (not a French phoneme, but avoid if encountered)
-   - Any phoneme with diacritics not listed above
-   - Any affricate combinations not in the list
+═══════════════════════════════════════════════════════════════════════════════
+RULE #3: SCHWA [ə] RETENTION (only before consonants)
+═══════════════════════════════════════════════════════════════════════════════
 
-3. R pronunciation:
-   - ONLY use [ʁ] (uvular R) - this is the supported phoneme
-   - Even if r_style='rolled', you MUST still output [ʁ] for Google TTS
-   - Note in the notes field that traditional rolled [r] was requested
+Keep schwa [ə] ONLY when the next word starts with a CONSONANT:
+- "laisse tes" → [lɛ-sə tɛ] (schwa kept - next word starts with consonant)
+- "belle nuit" → [bɛ-lə nɥi] (schwa kept)
+- "douce France" → [du-sə frɑ̃-sə] (schwa kept)
 
-4. Each syllable MUST contain exactly ONE vowel from the supported list
+Word-final 'e' at end of phrase: Pronounce as [ə]
+- "je t'aime" → [ʒə tɛ-mə]
 
-5. Use BROAD transcription only - avoid narrow phonetic details
+═══════════════════════════════════════════════════════════════════════════════
+RULE #4: R PRONUNCIATION - USE ALVEOLAR TRILL [r]
+═══════════════════════════════════════════════════════════════════════════════
 
-3. Syllabification: Separate syllables with hyphen "-" (e.g., "ʒə-tə-lə").
+VISUAL ACCURACY FIRST STRATEGY:
+- The IPA display MUST show the correct classical symbol [r] (alveolar trill)
+- This is what students need to SEE and learn
+- Do NOT use [ʁ] (uvular) or [ɾ] (tap) in the output
+- Note: Google TTS may render it as uvular [ʁ] in audio, but that's acceptable
+- The written IPA must be pedagogically correct for classical singing
 
-4. Liaisons: 
-   - Mark liaisons with "‿" (e.g., "z‿a").
-   - Apply "Liaisons Facultatives" that are standard in elevated singing (soutenus style).
-   - Strict transformations: s/x → [z], d → [t], f → [v], g → [k].
-   - Avoid "Forbidden Liaisons" (e.g., after 'et', singular noun + adj).
+Examples:
+- "rêve" → [rɛ-və]
+- "amour" → [a-mur]
+- "sur" → [syr]
+- "roses" → [ro-zə]
+- "Regarde" → [rə-gar-də]
 
-5. The Schwa (ə) - CRITICAL:
-   - Internal Schwa: If a word-internal 'e' typically counts as a syllable in French poetry (to maintain meter), write it as [ə] or (ə). Do NOT omit it if it breaks the legato.
-   - Final Schwa: Put in parentheses (ə) unless it is clearly elided before a vowel.
+═══════════════════════════════════════════════════════════════════════════════
+RULE #5: LIAISONS
+═══════════════════════════════════════════════════════════════════════════════
 
-6. Vowels:
-   - Nasal vowels must be pure (no n/m consonant sound unless liaison dictates)
-   - ONLY use the 3 supported nasal vowels: [ɑ̃], [ɛ̃], [ɔ̃]
-   - Convert [œ̃] → [ɛ̃] (Google TTS does not support [œ̃])
-   - Use [a] for all 'a' sounds (Google TTS only supports [a], not [ɑ])
-   - Use only supported oral vowels: a, ɛ, e, i, ɔ, o, u, y, ø, œ, ə
+Apply liaisons in singing style:
+- Article + noun: "les amis" → [lɛ-z‿a-mi]
+- Adjective + noun: "doux yeux" → [du-z‿jø]
 
-7. Consonants:
-   - R handling: ALWAYS use [ʁ] in ipa_sung (only supported R phoneme)
-   - If r_style='rolled', note in the notes field that traditional [r] was requested
-   - Ti/Di: Watch out for [sj] vs [ti] exceptions
-   - ONLY use supported consonants: b, d, f, g, k, l, m, n, p, ʁ, ʃ, s, t, v, ʒ, z
+Liaison consonant transformations:
+- s, x → [z]
+- d → [t]
 
-Example Input: "Les rêves qui"
-Example JSON Output:
+FORBIDDEN: After "et" - "et elle" → [e ɛl] NOT [e-t‿ɛl]
+
+═══════════════════════════════════════════════════════════════════════════════
+RULE #6: NASAL VOWELS
+═══════════════════════════════════════════════════════════════════════════════
+
+- [ɑ̃] = an, en, em, am (blanc, étincelant)
+- [ɛ̃] = in, im, ain, ein, un (vin, brun)
+- [ɔ̃] = on, om (bon, ton)
+
+Convert [œ̃] → [ɛ̃] for TTS compatibility.
+
+═══════════════════════════════════════════════════════════════════════════════
+RULE #7: SYLLABIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Use hyphens "-" to separate syllables within words.
+Use spaces between words.
+Use ‿ for liaisons and elisions.
+
+═══════════════════════════════════════════════════════════════════════════════
+EXAMPLES
+═══════════════════════════════════════════════════════════════════════════════
+
+Example 1: "Lydia sur tes roses joues"
 {
-  "lines": [
-    {
-      "original": "Les rêves qui",
-      "ipa_sung": "lɛ-ʁɛ-və ki",
-      "ipa_spoken": "lɛ ʁɛv ki",
-      "notes": ["Maintained schwa in 'rêves' to ensure melodic flow."]
-    }
-  ]
+  "lines": [{
+    "original": "Lydia sur tes roses joues",
+    "ipa_sung": "li-dja syr tɛ ro-zə ʒu"
+  }]
 }
 
-Example Input: "un brun" (contains [œ̃])
-Example JSON Output:
+Example 2: "Roule étincelant"
 {
-  "lines": [
-    {
-      "original": "un brun",
-      "ipa_sung": "ɛ̃ bʁɛ̃",
-      "ipa_spoken": "œ̃ bʁœ̃",
-      "notes": ["Converted [œ̃] to [ɛ̃] in ipa_sung for Google TTS compatibility (Google does not support [œ̃]). ipa_spoken shows the traditional IPA."]
-    }
-  ]
+  "lines": [{
+    "original": "Roule étincelant",
+    "ipa_sung": "rul‿e-tɛ̃-sə-lɑ̃"
+  }]
 }
 
-Example Input: "lundi parfum" (contains multiple [œ̃])
-Example JSON Output:
+Example 3: "Et sur ton col frais et si blanc"
 {
-  "lines": [
-    {
-      "original": "lundi parfum",
-      "ipa_sung": "lɛ̃-di paʁ-fɛ̃",
-      "ipa_spoken": "lœ̃di paʁfœ̃",
-      "notes": ["Converted all [œ̃] to [ɛ̃] for Google TTS compatibility. Traditional pronunciation uses [œ̃]."]
-    }
-  ]
+  "lines": [{
+    "original": "Et sur ton col frais et si blanc",
+    "ipa_sung": "e syr tɔ̃ kɔl frɛ e si blɑ̃"
+  }]
 }
 
-IMPORTANT RULES FOR ipa_sung vs ipa_spoken:
-- [ipa_sung]: MUST use ONLY Google TTS-supported phonemes (see list above)
-  * Convert [œ̃] → [ɛ̃]
-  * Use [ʁ] for R (even if rolled R was requested)
-  * Use [a] instead of [ɑ]
-  * This is what will be sent to Google TTS for audio generation
+Example 4: "L'or fluide que tu dénoues"
+{
+  "lines": [{
+    "original": "L'or fluide que tu dénoues",
+    "ipa_sung": "lɔr flɥid kə ty de-nu"
+  }]
+}
 
-- [ipa_spoken]: Can show traditional/standard IPA for educational reference
-  * Can include [œ̃] to show traditional pronunciation
-  * Can show other phonetic details for learning purposes
+Example 5: "Laisse tes baisers de colombe"
+{
+  "lines": [{
+    "original": "Laisse tes baisers de colombe",
+    "ipa_sung": "lɛ-sə tɛ bɛ-ze də ko-lɔ̃-bə"
+  }]
+}
 
-- [notes]: MUST explain all conversions made for Google TTS compatibility
-  * When [œ̃] → [ɛ̃], note it
-  * When rolled R is requested but [ʁ] is used, note it
-  * Any other compatibility adjustments
+═══════════════════════════════════════════════════════════════════════════════
+FINAL CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ "tes", "mes", "les", "ses" use [ɛ] (open E), NEVER [ə]
+✓ Schwa is ELIDED before vowels (use ‿ liaison marker)
+✓ Schwa is KEPT before consonants
+✓ All R sounds use alveolar trill [r] (NOT [ʁ] or [ɾ])
+✓ Proper liaisons applied
 
 Now process the following French lyrics:
 ${lyrics}`;

@@ -1,7 +1,6 @@
 'use client';
 
 import { LyricLine } from '@/lib/types';
-import { useLanguage } from '@/lib/i18n';
 
 interface LyricsCardProps {
   lines: LyricLine[];
@@ -10,67 +9,33 @@ interface LyricsCardProps {
 }
 
 export default function LyricsCard({ lines, onPlayLine, playingLineIndex }: LyricsCardProps) {
-  const { t } = useLanguage();
-
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4">
+    <div className="divide-y divide-gray-100 dark:divide-gray-700">
       {lines.map((line, index) => (
         <div
           key={index}
-          className={`p-4 border rounded-lg transition-colors ${
+          className={`group py-3 px-2 -mx-2 rounded transition-colors ${
             playingLineIndex === index
-              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
-              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+              ? 'bg-blue-50 dark:bg-blue-900/20'
+              : 'hover:bg-gray-50 dark:hover:bg-gray-800'
           }`}
         >
-          <div className="space-y-2">
-            {/* Original text */}
-            <div className="text-lg font-medium text-gray-900 dark:text-white">
-              {line.original}
-            </div>
-
-            {/* IPA Sung */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                {t.ipaSung}
-              </span>
-              <span className="text-base font-mono text-blue-700 dark:text-blue-300">
-                {line.ipa_sung}
-              </span>
-              {onPlayLine && (
-                <button
-                  onClick={() => onPlayLine(index, line)}
-                  className="ml-auto px-3 py-2 text-xs sm:text-sm bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 text-green-700 dark:text-green-300 rounded transition-colors touch-manipulation min-h-[36px]"
-                >
-                  {t.play}
-                </button>
-              )}
-            </div>
-
-            {/* IPA Spoken (对比用) */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                {t.ipaSpoken}
-              </span>
-              <span className="text-sm font-mono text-gray-600 dark:text-gray-400">
-                {line.ipa_spoken}
-              </span>
-            </div>
-
-            {/* Notes */}
-            {line.notes && line.notes.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                  {t.notes}
-                </div>
-                <ul className="list-disc list-inside space-y-1">
-                  {line.notes.map((note, noteIndex) => (
-                    <li key={noteIndex} className="text-xs text-gray-600 dark:text-gray-400">
-                      {note}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+          {/* Original text */}
+          <div className="font-semibold text-gray-900 dark:text-white">
+            {line.original}
+          </div>
+          {/* IPA + Play button */}
+          <div className="flex items-center justify-between mt-1">
+            <span className="font-mono text-blue-600 dark:text-blue-400">
+              {line.ipa_sung}
+            </span>
+            {onPlayLine && (
+              <button
+                onClick={() => onPlayLine(index, line)}
+                className="opacity-0 group-hover:opacity-100 focus:opacity-100 px-2 py-1 text-sm bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 text-green-700 dark:text-green-300 rounded transition-all touch-manipulation"
+              >
+                ▶️
+              </button>
             )}
           </div>
         </div>

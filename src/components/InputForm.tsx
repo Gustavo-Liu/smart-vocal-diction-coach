@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { RStyle } from '@/lib/types';
 import { useLanguage } from '@/lib/i18n';
 
 const LYDIA_FAURE_LYRICS = `Lydia sur tes roses joues
@@ -25,7 +24,7 @@ O Lydia, rends-moi la vie
 Que je puisse mourir, mourir toujours!`;
 
 interface InputFormProps {
-  onSubmit: (lyrics: string, rStyle: RStyle) => void;
+  onSubmit: (lyrics: string) => void;
   isLoading?: boolean;
   onOpenSearch?: () => void;
   lyrics?: string;
@@ -35,7 +34,6 @@ interface InputFormProps {
 export default function InputForm({ onSubmit, isLoading = false, onOpenSearch, lyrics: externalLyrics, onLyricsChange }: InputFormProps) {
   const { t } = useLanguage();
   const [internalLyrics, setInternalLyrics] = useState('');
-  const [rStyle, setRStyle] = useState<RStyle>('uvular');
 
   const lyrics = externalLyrics !== undefined ? externalLyrics : internalLyrics;
   const setLyrics = (value: string) => {
@@ -49,7 +47,7 @@ export default function InputForm({ onSubmit, isLoading = false, onOpenSearch, l
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (lyrics.trim()) {
-      onSubmit(lyrics.trim(), rStyle);
+      onSubmit(lyrics.trim());
     }
   };
 
@@ -70,7 +68,7 @@ export default function InputForm({ onSubmit, isLoading = false, onOpenSearch, l
               onClick={onOpenSearch}
               className="text-xs px-3 py-1 bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800 text-green-700 dark:text-green-300 rounded-md transition-colors"
             >
-              🔍 智能搜索
+              {t.smartSearch}
             </button>
           )}
           <button
@@ -91,22 +89,6 @@ export default function InputForm({ onSubmit, isLoading = false, onOpenSearch, l
         className="w-full h-48 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white resize-y"
         disabled={isLoading}
       />
-
-      <div className="flex items-center gap-4">
-        <label htmlFor="r-style" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {t.rStyleLabel}
-        </label>
-        <select
-          id="r-style"
-          value={rStyle}
-          onChange={(e) => setRStyle(e.target.value as RStyle)}
-          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-          disabled={isLoading}
-        >
-          <option value="uvular">{t.rStyleUvular}</option>
-          <option value="rolled">{t.rStyleRolled}</option>
-        </select>
-      </div>
 
       <button
         type="submit"

@@ -1,8 +1,6 @@
 export interface LyricLine {
   original: string;
   ipa_sung: string;      // 带连读标记的 IPA
-  ipa_spoken: string;    // 口语 IPA（对比用）
-  notes: string[];       // 连读说明
 }
 
 export interface ProcessResult {
@@ -13,11 +11,8 @@ export interface ProcessResult {
   };
 }
 
-export type RStyle = 'uvular' | 'rolled';
-
 export interface ProcessRequest {
   lyrics: string;
-  r_style?: RStyle;
 }
 
 export interface AudioRequest {
@@ -37,4 +32,33 @@ export interface ApiCallRecord {
   cost?: number;             // 花费（美元）
   status: 'success' | 'error';
   error?: string;
+}
+
+// Phoneme mapping for local audio files
+export interface PhonemeMapping {
+  ipa: string;           // IPA符号
+  label: string;         // 显示标签
+  audioFile: string;     // 音频文件名
+  startTime?: number;    // 源视频起始时间（参考）
+  endTime?: number;      // 源视频结束时间（参考）
+}
+
+// Video favorites for YouTube integration
+export interface VideoFavorite {
+  id: string;
+  videoId: string;       // YouTube video ID
+  title: string;
+  thumbnailUrl?: string;
+  addedAt: number;
+  notes?: string;
+}
+
+// YouTube search result
+export interface YouTubeVideoResult {
+  videoId: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  channelTitle: string;
+  publishedAt: string;
 }
