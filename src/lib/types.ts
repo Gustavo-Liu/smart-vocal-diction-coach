@@ -62,3 +62,13 @@ export interface YouTubeVideoResult {
   channelTitle: string;
   publishedAt: string;
 }
+
+// Lyrics bookmark for saving processed lyrics
+export interface LyricsBookmark {
+  id: string;
+  title: string;              // User-defined or auto-generated title
+  originalLyrics: string;     // Original lyrics text
+  processedResult: ProcessResult;  // IPA processing result
+  addedAt: number;            // Timestamp when added
+  lastViewedAt?: number;      // Last viewed timestamp
+}

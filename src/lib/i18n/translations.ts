@@ -102,6 +102,8 @@ export const translations = {
     videoFavorites: '视频收藏',
     noFavorites: '暂无收藏视频',
     addedOn: '添加于',
+    editTitle: '编辑标题',
+    saveTitle: '保存',
 
     // YouTube Search
     youtubeSearch: 'YouTube 搜索',
@@ -117,7 +119,20 @@ export const translations = {
     lyricsInputTitle: '输入法语歌词',
 
     // Video Favorites Button
-    myFavorites: '我的收藏',
+    myFavorites: '视频收藏',
+
+    // Lyrics Bookmarks
+    lyricsBookmarks: '歌词收藏',
+    noLyricsBookmarks: '暂无收藏歌词',
+    bookmarkLyrics: '收藏歌词',
+    removeBookmark: '删除收藏',
+    loadBookmark: '加载收藏',
+    bookmarkAdded: '已添加到收藏',
+    bookmarkTitle: '收藏标题',
+    bookmarkTitlePlaceholder: '输入标题（可选）',
+    confirmBookmark: '确认收藏',
+    lyricsPreview: '歌词预览',
+    alreadyBookmarked: '已收藏',
 
     // Onboarding / How to use
     howToUseTitle: '如何使用',
@@ -234,6 +249,8 @@ export const translations = {
     videoFavorites: 'Favorites',
     noFavorites: 'No favorite videos yet',
     addedOn: 'Added on',
+    editTitle: 'Edit title',
+    saveTitle: 'Save',
 
     // YouTube Search
     youtubeSearch: 'YouTube Search',
@@ -249,7 +266,20 @@ export const translations = {
     lyricsInputTitle: 'Enter French Lyrics',
 
     // Video Favorites Button
-    myFavorites: 'Favorites',
+    myFavorites: 'Video Favorites',
+
+    // Lyrics Bookmarks
+    lyricsBookmarks: 'Lyrics Bookmarks',
+    noLyricsBookmarks: 'No bookmarked lyrics yet',
+    bookmarkLyrics: 'Bookmark',
+    removeBookmark: 'Remove Bookmark',
+    loadBookmark: 'Load Bookmark',
+    bookmarkAdded: 'Added to bookmarks',
+    bookmarkTitle: 'Bookmark Title',
+    bookmarkTitlePlaceholder: 'Enter title (optional)',
+    confirmBookmark: 'Confirm',
+    lyricsPreview: 'Lyrics Preview',
+    alreadyBookmarked: 'Bookmarked',
 
     // Onboarding / How to use
     howToUseTitle: 'How to use',

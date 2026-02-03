@@ -80,6 +80,17 @@ export function updateFavoriteNotes(id: string, notes: string): void {
 }
 
 /**
+ * Update title for a favorite
+ */
+export function updateFavoriteTitle(id: string, title: string): void {
+  const favorites = getFavorites();
+  const updated = favorites.map(f =>
+    f.id === id ? { ...f, title } : f
+  );
+  saveFavorites(updated);
+}
+
+/**
  * Save favorites to localStorage
  */
 function saveFavorites(favorites: VideoFavorite[]): void {

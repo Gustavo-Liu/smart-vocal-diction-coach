@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '@/lib/i18n';
 import { VideoFavorite } from '@/lib/types';
-import { getFavorites, removeFavorite, getYouTubeThumbnail } from '@/lib/video-favorites';
+import { getFavorites, removeFavorite, getYouTubeThumbnail, updateFavoriteTitle } from '@/lib/video-favorites';
 
 interface VideoFavoritesProps {
   onSelectVideo?: (videoId: string, title: string) => void;
@@ -14,6 +14,9 @@ export default function VideoFavorites({ onSelectVideo, refreshTrigger }: VideoF
   const { t } = useLanguage();
   const [favorites, setFavorites] = useState<VideoFavorite[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   // Load favorites from localStorage
   const loadFavorites = useCallback(() => {
@@ -28,6 +31,39 @@ export default function VideoFavorites({ onSelectVideo, refreshTrigger }: VideoF
     e.stopPropagation();
     removeFavorite(id);
     loadFavorites();
+  };
+
+  const handleStartEdit = (e: React.MouseEvent, video: VideoFavorite) => {
+    e.stopPropagation();
+    setEditingId(video.id);
+    setEditingTitle(video.title);
+    setTimeout(() => editInputRef.current?.focus(), 50);
+  };
+
+  const handleSaveTitle = (e: React.MouseEvent | React.FormEvent, id: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (editingTitle.trim()) {
+      updateFavoriteTitle(id, editingTitle.trim());
+      loadFavorites();
+    }
+    setEditingId(null);
+    setEditingTitle('');
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(null);
+    setEditingTitle('');
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === 'Enter') {
+      handleSaveTitle(e, id);
+    } else if (e.key === 'Escape') {
+      setEditingId(null);
+      setEditingTitle('');
+    }
   };
 
   const formatDate = (timestamp: number) => {
@@ -93,9 +129,48 @@ export default function VideoFavorites({ onSelectVideo, refreshTrigger }: VideoF
 
               {/* Video info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {video.title}
-                </p>
+                {editingId === video.id ? (
+                  <form onSubmit={(e) => handleSaveTitle(e, video.id)} className="flex items-center gap-1">
+                    <input
+                      ref={editInputRef}
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={(e) => handleEditKeyDown(e, video.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 px-2 py-1 text-sm border border-blue-400 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-600 dark:text-white dark:border-blue-500"
+                    />
+                    <button
+                      type="submit"
+                      onClick={(e) => handleSaveTitle(e, video.id)}
+                      className="p-1 text-green-600 hover:text-green-700 dark:text-green-400"
+                      title={t.saveTitle}
+                    >
+                      ✓
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      title={t.cancel}
+                    >
+                      ✕
+                    </button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1">
+                      {video.title}
+                    </p>
+                    <button
+                      onClick={(e) => handleStartEdit(e, video)}
+                      className="p-1 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                      title={t.editTitle}
+                    >
+                      ✎
+                    </button>
+                  </div>
+                )}
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {t.addedOn} {formatDate(video.addedAt)}
                 </p>

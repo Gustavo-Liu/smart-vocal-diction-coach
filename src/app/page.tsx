@@ -13,7 +13,10 @@ import IpaReferenceTable from '@/components/IpaReferenceTable';
 import YouTubeSection from '@/components/YouTubeSection';
 import VideoFavorites from '@/components/VideoFavorites';
 import YouTubeSearchDialog from '@/components/YouTubeSearchDialog';
-import { ProcessResult, LyricLine, ApiCallRecord } from '@/lib/types';
+import LyricsBookmarksSidebar from '@/components/LyricsBookmarksSidebar';
+import BookmarkTitleDialog from '@/components/BookmarkTitleDialog';
+import { ProcessResult, LyricLine, ApiCallRecord, LyricsBookmark } from '@/lib/types';
+import { addBookmark, isBookmarked } from '@/lib/lyrics-bookmarks';
 import { useLanguage } from '@/lib/i18n';
 
 export default function Home() {
@@ -42,6 +45,10 @@ export default function Home() {
   const [showFavorites, setShowFavorites] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [howToUseExpanded, setHowToUseExpanded] = useState(true);
+  const [showLyricsBookmarks, setShowLyricsBookmarks] = useState(false);
+  const [showBookmarkDialog, setShowBookmarkDialog] = useState(false);
+  const [lyricsBookmarkRefresh, setLyricsBookmarkRefresh] = useState(0);
+  const [isCurrentLyricsBookmarked, setIsCurrentLyricsBookmarked] = useState(false);
 
   // 首次访问默认展开「如何使用」，之后若用户曾折叠则默认折叠
   useEffect(() => {
@@ -63,6 +70,33 @@ export default function Home() {
       }
       return next;
     });
+  };
+
+  // Check if current lyrics are bookmarked
+  useEffect(() => {
+    if (lyrics.trim() && result) {
+      setIsCurrentLyricsBookmarked(isBookmarked(lyrics.trim()));
+    } else {
+      setIsCurrentLyricsBookmarked(false);
+    }
+  }, [lyrics, result, lyricsBookmarkRefresh]);
+
+  // Handle loading a bookmark
+  const handleLoadBookmark = (bookmark: LyricsBookmark) => {
+    setLyrics(bookmark.originalLyrics);
+    setResult(bookmark.processedResult);
+    setError(null);
+    setDebugInfo(null);
+    setIsCurrentLyricsBookmarked(true);
+  };
+
+  // Handle adding a bookmark
+  const handleAddBookmark = (title: string) => {
+    if (!result || !lyrics.trim()) return;
+    addBookmark(title, lyrics.trim(), result);
+    setShowBookmarkDialog(false);
+    setLyricsBookmarkRefresh(prev => prev + 1);
+    setIsCurrentLyricsBookmarked(true);
   };
 
   // 清理 audio URL 以防止内存泄漏
@@ -515,6 +549,14 @@ export default function Home() {
               <span className="hidden sm:inline">{t.ipaReference}</span>
             </button>
             <button
+              onClick={() => setShowLyricsBookmarks(true)}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
+              title={t.lyricsBookmarks}
+            >
+              <span>📄</span>
+              <span className="hidden sm:inline">{t.lyricsBookmarks}</span>
+            </button>
+            <button
               onClick={() => setShowFavorites(true)}
               className="px-3 py-1.5 bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
               title={t.myFavorites}
@@ -687,16 +729,33 @@ Que je puisse mourir, mourir toujours!`;
             {/* Results */}
             {result && (
               <div className="space-y-4">
-                {/* Control Bar - Speed + Play All */}
+                {/* Control Bar - Speed + Bookmark + Play All */}
                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
                   <SpeedControl speed={speed} onSpeedChange={setSpeed} />
-                  <button
-                    onClick={handlePlayAll}
-                    disabled={isLoading}
-                    className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors touch-manipulation"
-                  >
-                    {isLoading ? t.playingAll : t.playAll}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowBookmarkDialog(true)}
+                      disabled={isCurrentLyricsBookmarked}
+                      className={`px-4 py-2 font-medium rounded-lg transition-colors touch-manipulation flex items-center gap-1.5 ${
+                        isCurrentLyricsBookmarked
+                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 cursor-default'
+                          : 'bg-amber-500 hover:bg-amber-600 text-white'
+                      }`}
+                      title={isCurrentLyricsBookmarked ? t.alreadyBookmarked : t.bookmarkLyrics}
+                    >
+                      <span>{isCurrentLyricsBookmarked ? '⭐' : '☆'}</span>
+                      <span className="hidden sm:inline">
+                        {isCurrentLyricsBookmarked ? t.alreadyBookmarked : t.bookmarkLyrics}
+                      </span>
+                    </button>
+                    <button
+                      onClick={handlePlayAll}
+                      disabled={isLoading}
+                      className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors touch-manipulation"
+                    >
+                      {isLoading ? t.playingAll : t.playAll}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Lyrics - Scrollable Container */}
@@ -872,6 +931,22 @@ Que je puisse mourir, mourir toujours!`;
           </div>
         </div>
       )}
+
+      {/* Lyrics Bookmarks Sidebar */}
+      <LyricsBookmarksSidebar
+        isOpen={showLyricsBookmarks}
+        onClose={() => setShowLyricsBookmarks(false)}
+        onLoadBookmark={handleLoadBookmark}
+        refreshTrigger={lyricsBookmarkRefresh}
+      />
+
+      {/* Bookmark Title Dialog */}
+      <BookmarkTitleDialog
+        isOpen={showBookmarkDialog}
+        onClose={() => setShowBookmarkDialog(false)}
+        onConfirm={handleAddBookmark}
+        lyricsPreview={lyrics}
+      />
     </main>
   );
 }
